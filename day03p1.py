@@ -8,19 +8,19 @@ from math import sqrt, floor, modf
 import sys
 
 
-def is_square(n):
+def is_odd_square(n):
     if n < 0 or not isinstance(n, (float, int)):
         return False
 
-    return modf(sqrt(n))[0] == 0.0
+    return modf(sqrt(n))[0] == 0.0 and sqrt(n) % 2 == 1
 
 
-def get_odd_square_lower_bound_and_ring(num):
+def odd_square_lower_bound_and_ring(num):
     if num < 1:
         return (None, None)
 
     ring = it.count(start=1)
-    odd_squares = (x for x in it.count() if is_square(x) and (sqrt(x) % 2) == 1)
+    odd_squares = (x for x in it.count() if is_odd_square(x))
     odd_squares_lower, odd_squares_upper = it.tee(odd_squares)
     odd_squares_upper = cc.drop(1, odd_squares_upper)
 
@@ -30,13 +30,13 @@ def get_odd_square_lower_bound_and_ring(num):
 
 
 def get_position(num):
-    odd_square_lower_bound, ring = get_odd_square_lower_bound_and_ring(num)
+    odd_square_lower_bound, ring = odd_square_lower_bound_and_ring(num)
 
     if odd_square_lower_bound is None:
         return (None, None)
     if num == 1:
         return (0, 0)
-    if is_square(num) and sqrt(num) % 2 == 1:
+    if is_odd_square(num):
         mag = int(sqrt(odd_square_lower_bound)) - ring + 1
         return (mag, -mag)
 
