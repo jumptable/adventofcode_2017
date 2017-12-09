@@ -8,7 +8,6 @@ import operator as op
 
 data_input = cc.pipe(
     sys.stdin.readlines()
-    # open(r'day02p2.in')
     , cc.map(lambda x: x.replace('\n', ''))
     , list
 )
