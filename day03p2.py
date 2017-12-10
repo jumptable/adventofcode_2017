@@ -7,14 +7,6 @@ from pprint import pprint as pp
 from math import sqrt, floor, modf
 import sys
 
-step_fns = it.cycle([
-    lambda x:   (x[0] + 1, x[1]    )
-    , lambda x: (x[0]    , x[1] + 1)
-    , lambda x: (x[0] - 1, x[1]    )
-    , lambda x: (x[0]    , x[1] - 1)
-])
-
-
 def is_odd_square(n):
     if n < 0 or not isinstance(n, (float, int)):
         return False
@@ -49,6 +41,14 @@ def sum_path():
     side_length = 1
 
     sum_dict = {(0, 0) : 1}
+
+    step_fns = it.cycle([
+        lambda x:   (x[0] + 1, x[1]    )
+        , lambda x: (x[0]    , x[1] + 1)
+        , lambda x: (x[0] - 1, x[1]    )
+        , lambda x: (x[0]    , x[1] - 1)
+    ])
+
     step_fn = next(step_fns)
     rotation_break_seq = set()
 
