@@ -39,7 +39,7 @@ class Tree(object):
 
     @property
     def siblings_are_balanced(self):
-        return len(self.grouped('siblings')) <= 1
+        return len(self.grouped('siblings')) <= 1 and not len(self.siblings) == 1
 
     def __repr__(self):
         return self.node_id
@@ -48,6 +48,18 @@ class Tree(object):
         print('{}{} [{}]'.format(' '*4*level, self.node_id, self.weight))
         for child in self.children:
             child.print(level=level+1)
+
+    def find_unbalanced(self):
+        node = self
+        while True:
+            grouped_children = node.grouped('children')
+            unbalanced = cc.pipe(
+                grouped_children
+                , cc.valfilter(lambda x: len(x) == 1)
+                , lambda x: cc.first(x.values())[0])
+            if unbalanced.children_are_balanced:
+                return unbalanced
+            node = unbalanced
 
     def grouped(self, group, key=lambda x: x.weight):
         if group == 'siblings' and not self.parent:
@@ -83,13 +95,12 @@ class Tree(object):
 
 tree_val_re = re.compile('([a-z]{1,}).*\(([0-9]{1,})\)')
 input_file = cc.pipe(
-    open(r'day07_test.in')
+    open(r'day07.in')
     , list
 )
 
 data_input = cc.pipe(
-    input_file
-    # sys.stdin.readlines()
+    sys.stdin.readlines()
     , cc.map(lambda x: x.replace('\n', ''))
     , cc.map(lambda x: x.split('->'))
     , cc.map(lambda x: (x[0], [] if len(x) == 1 else cc.pipe(x[1], lambda x: x.split(','), cc.map(str.strip), list)))
@@ -115,36 +126,15 @@ root = cc.pipe(
     , cc.filter(lambda x: x not in cc.concat(tree_mapping_dict.values()))
     , cc.first
 )
+
 tree = Tree(root, tree_mapping_dict, tree_val_dict)
 
-grouped_children = cc.pipe(
-    tree.dfs()
-    , cc.curry(it.dropwhile)(lambda x: x.is_balanced and all(y.is_balanced for y in x.children))
-    , cc.first
-    , lambda x: x.children
-    , lambda x: [(y, y.weight) for y in x]
-    , cc.groupby(lambda x: x[1])
-)
+unbalanced                  = tree.find_unbalanced()
+unbalanced_self_weight      = unbalanced.weight - sum(x.weight for x in unbalanced.children)
+unbalanced_grouped_siblings = unbalanced.grouped('siblings')
 
-unbalanced_child = cc.pipe(
-    grouped_children
-    , cc.valmap(len)
-    , cc.valfilter(lambda x: x ==1)
-    , lambda x: x.keys()
-    , cc.first
-    , lambda x: grouped_children[x][0][0]
-)
+balanced_weight             = cc.first(cc.valfilter(lambda x: len(x) > 1, unbalanced_grouped_siblings).keys())
+unbalanced_weight           = cc.first(cc.valfilter(lambda x: len(x) == 1, unbalanced_grouped_siblings).keys())
+weight_offset               = balanced_weight - unbalanced_weight
 
-balanced_children = cc.pipe(
-    grouped_children
-    , cc.keyfilter(lambda x: x != unbalanced_child.weight)
-    , cc.valmap(lambda x: [y[0] for y in x])
-    , lambda x: cc.concat(x.values())
-    , list
-)
-
-weight_diff = balanced_children[0].weight - unbalanced_child.weight
-unbalanced_self_weight = unbalanced_child.weight - sum(x.weight for x in unbalanced_child.children)
-answer = weight_diff + unbalanced_self_weight
-
-pp(root)
+pp(unbalanced_self_weight + weight_offset)
