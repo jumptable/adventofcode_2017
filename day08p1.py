@@ -34,4 +34,3 @@ for line in sys.stdin.readlines():
 max_value = max(regs.values())
 
 print(max_value)
-print()
